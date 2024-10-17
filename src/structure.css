@@ -1,0 +1,453 @@
+
+* {
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    background: black;
+}
+
+#a3d {
+    width: 100vmax;
+    height: 100vmin;
+    position: absolute;
+    overflow: hidden;
+}
+
+/*3d元素容器,转换优先级：视角旋转viewf>views>viewXYZ*/
+#view {
+    position: absolute;
+    perspective: calc(1rem * var(--p));
+    transform-style: preserve-3d;
+    transition: --p 2s, --viewX 2s, --viewY 2s, --viewZ 2s, --views 2s, --viewf 2s;
+    --p: 300;
+    animation: 2s 1 ease-in-out alternate EnterMain;
+}
+
+.M {
+    --viewX: 0;
+    --viewY: -15;
+    --viewZ: 300;
+    --viewf: 0deg;
+    --views: 0deg;
+}
+
+.T {
+    --viewX: 0;
+    --viewY: -250;
+    --viewZ: 240;
+    --viewf: 0deg;
+    --views: -75deg;
+}
+
+.B {
+    --viewX: 280;
+    --viewY: -30;
+    --viewZ: 100;
+    --viewf: -90deg;
+    --views: -2deg;
+}
+
+.D {
+    --viewX: -260;
+    --viewY: 10;
+    --viewZ: 70;
+    --viewf: 90deg;
+    --views: -2deg;
+}
+
+/*
+rightTable:
+--viewX: calc(1rem * 1.8);
+    --viewY: calc(1rem * -0.5);
+    --viewZ: calc(1rem * 1.7);
+    --viewf: 90deg;
+    --views: 0deg;
+leftTable:
+    --viewX: calc(1rem * -1.8);
+    --viewY: calc(1rem * -0.8);
+    --viewZ: calc(1rem * 1.7);
+    --viewf: -90deg;
+    --views: 0deg;
+*/
+
+/*多媒体适配*/
+/*保证不同宽高比下全屏最佳显示 保证最大视口w/h=16/9,适配横竖屏且始终居中，保证3d元素容器w/h=4/3*/
+@media screen and (min-aspect-ratio: 3/4) and (max-aspect-ratio: 4/3) {
+    html {
+        font-size: 0.25vmax;
+    }
+
+    #view {
+        width: 100vmax;
+        height: 75vmax;
+        top: calc(50vmin - 37.5vmax);
+    }
+
+    #a3d {
+        top: calc(50vh - 50vmin);
+        left: calc(50vw - 50vmax);
+    }
+}
+
+@media screen and (min-aspect-ratio: 4/3) , screen and (max-aspect-ratio: 3/4) {
+    html {
+        font-size: 0.33333vmin;
+    }
+
+    #view {
+        width: 133.33vmin;
+        height: 100vmin;
+        left: calc(min(50vmax, 89vmin) - 66.66vmin);
+    }
+
+    #a3d {
+        max-width: 178vmin;
+        top: calc(50vh - 50vmin);
+        left: calc(50vw - min(50vmax, 89vmin));
+    }
+}
+
+@media screen and (max-aspect-ratio: 1/1) {
+    #a3d {
+        transform: rotate(90deg);
+    }
+}
+
+/*各部分的基础3d结构 都在view内部 使用--m作为长度单位，位置使用固定3d变化加视角变量*/
+.view div {
+    --w: 0;
+    --h: 0;
+    width: calc(1rem * var(--w));
+    height: calc(1rem * var(--h));
+}
+
+.view > div {
+    position: absolute;
+    --oX: 0;
+    --oY: 0;
+    --oZ: 0;
+    --oRx: 0deg;
+    --oRy: 0deg;
+    --oRz: 0deg;
+    top: calc(1rem * (150 - var(--h) / 2));
+    left: calc(1rem * (200 - var(--w) / 2));
+    transform: rotateX(var(--views)) rotateY(var(--viewf)) translate3d(calc(1rem * var(--viewX)), calc(1rem * var(--viewY)), calc(1rem * var(--viewZ))) translate3d(calc(1rem * var(--oX)), calc(1rem * var(--oY)), calc(1rem * var(--oZ))) rotateX(var(--oRx)) rotateY(var(--oRy)) rotateZ(var(--oRz));
+    font-size: 20rem;
+    text-align: center;
+}
+
+.view > .obj {
+    --fX: 0;
+    --fY: 0;
+    --fZ: 0;
+    --fRx: 0deg;
+    --fRy: 0deg;
+    --fRz: 0deg;
+    transform: rotateX(var(--views)) rotateY(var(--viewf)) translate3d(calc(1rem * var(--viewX)), calc(1rem * var(--viewY)), calc(1rem * var(--viewZ))) translate3d(calc(1rem * var(--oX)), calc(1rem * var(--oY)), calc(1rem * var(--oZ))) rotateX(var(--oRx)) rotateY(var(--oRy)) rotateZ(var(--oRz)) translate3d(calc(1rem * var(--fX)), calc(1rem * var(--fY)), calc(1rem * var(--fZ))) rotateX(var(--fRx)) rotateY(var(--fRy)) rotateZ(var(--fRz));
+}
+
+.wall {
+    background: grey;
+}
+
+.wall.ceil {
+    --w: 400;
+    --h: 400;
+}
+
+.wall.ceil.down {
+    --oY: 150;
+    --oRx: 90deg;
+}
+
+.wall.ceil.up {
+    --oY: -150;
+    --oRx: -90deg;
+}
+
+.wall.side, .wall.front {
+    --w: 400;
+    --h: 300;
+}
+
+.wall.side.left {
+    --oX: -200;
+    --oRy: 90deg;
+}
+
+.wall.side.right {
+    --oX: 200;
+    --oRy: -90deg;
+}
+
+.wall.front {
+    --oZ: -200;
+}
+
+.table {
+    background: azure;
+}
+
+#table {
+    --w: 150;
+    --h: 60;
+    --oY: 80;
+    --oZ: -170;
+    --oRx: 90deg;
+}
+
+#tableFront {
+    --w: 140;
+    --h: 70;
+    --oY: 115;
+    --oZ: -150;
+}
+
+.bed {
+    background: darkorange;
+}
+
+.bed.face {
+    --w: 120;
+    --h: 220;
+    --oX: -140;
+    --oY: 100;
+    --oZ: -90;
+    --oRx: 90deg;
+}
+
+.bed.side {
+    --w: 220;
+    --h: 50;
+    --oY: 124;
+    --oX: -80;
+    --oZ: -90;
+    --oRy: 90deg;
+}
+
+.bed.foot {
+    --w: 120;
+    --h: 50;
+    --oX: -140;
+    --oY: 124;
+    --oZ: 20;
+}
+
+.desk {
+    background: bisque;
+}
+
+.desk.face {
+    --w: 70;
+    --h: 240;
+    --oX: 165;
+    --oY: 70;
+    --oZ: -80;
+    --oRx: 90deg;
+}
+
+.desk.border {
+    --w: 240;
+    --h: 80;
+    --oX: 130;
+    --oY: 110;
+    --oZ: -80;
+    --oRy: -90deg;
+}
+
+.desk.front {
+    --w: 70;
+    --h: 80;
+    --oX: 165;
+    --oY: 110;
+    --oZ: 40;
+}
+
+.bookcase {
+    background: cyan;
+}
+
+.bookcase.top {
+    --w: 40;
+    --h: 80;
+    --oX: 180;
+    --oY: 10;
+    --oZ: -160;
+    --oRx: 90deg;
+}
+
+.bookcase.border {
+    --w: 80;
+    --h: 60;
+    --oX: 160;
+    --oY: 40;
+    --oZ: -160;
+    --oRy: -90deg;
+}
+
+.bookcase.front {
+    --w: 40;
+    --h: 60;
+    --oX: 180;
+    --oY: 40;
+    --oZ: -120;
+}
+
+
+#clock {
+    background: orange;
+    --w: 30;
+    --h: 20;
+    --oX: -55;
+    --oY: 71.5;
+    --oZ: -180;
+    --oRx: 40deg;
+    --oRy: 40deg;
+    --oRz: -28deg;
+}
+
+#calendar {
+    background: orange;
+    --w: 30;
+    --h: 30;
+    --oX: 50;
+    --oY: 66;
+    --oZ: -190;
+    --oRx: 20deg;
+}
+
+#notes {
+    background: orange;
+    --w: 40;
+    --h: 30;
+    --oY: 79;
+    --oZ: -160;
+    --oRx: 90deg;
+}
+
+.view > .lamp {
+    background: gold;
+    --w: 30;
+    --oZ: -199;
+}
+
+.lamp.led {
+    --oY:56;
+    --oRx:30deg;
+}
+
+.lamp.set {
+    --oY:80;
+}
+
+.lamp.top{
+    --h: 10;
+    --fZ:5;
+    --fY:-1;
+    --fRx:90deg;
+}
+.lamp.front {
+    --h: 3;
+    --fZ:10;
+}
+.lamp.stick{
+    --h:5;
+    --fY:-10;
+    --fRz:90deg;
+}
+
+.view > .quilt {
+    background: pink;
+    --oX: -150;
+    --oY: 90;
+    --oZ: -160;
+    --w: 80;
+}
+
+.quilt.face {
+    --h: 80;
+    --fY: -10;
+    --fRx: 90deg;
+}
+
+.quilt.front {
+    --h: 20;
+    --fZ: 40;
+}
+
+.quilt.border {
+    --h: 20;
+    --fX: 40;
+    --fRy: 90deg;
+}
+
+.view > .light {
+    background: gold;
+    --w: 40;
+    --oY: -100;
+}
+
+.light.face {
+    --h: 40;
+    --fY: 5;
+    --fRx: 90deg;
+}
+
+.light.front {
+    --h: 10;
+    --fZ: 20;
+}
+
+/*部分面内部的结构*/
+#window {
+    background: aqua;
+    position: absolute;
+    --w: 120;
+    --h: 100;
+    top: 80rem;
+    left: 140rem;
+    border-radius: 15rem;
+}
+
+#projection {
+    background: yellow;
+    position: absolute;
+    width: 200rem;
+    height: 150rem;
+    top: 75rem;
+    left: 180rem;
+}
+
+/*在PC设备上使用透视跟随*/
+@media screen and (any-hover: hover) {
+
+}
+
+/*动画部分*/
+@keyframes EnterMain {
+    0% {
+        --viewY: 0;
+        --viewZ: 0;
+        --p: 200;
+    }
+    100% {
+        --viewY: -15;
+        --viewZ: 300;
+        --p: 300;
+    }
+}
+
+@keyframes mToTable {
+    0% {
+        --viewY: -15;
+        --viewZ: 300;
+        --views: 0deg;
+    }
+    100% {
+        --viewY: 150;
+        --viewZ: 310;
+        --views: -75deg;
+    }
+}
